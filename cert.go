@@ -61,10 +61,19 @@ func (m *mkcert) makeCert(hosts []string) {
 	// including custom roots. See https://support.apple.com/en-us/HT210176.
 	expiration := time.Now().AddDate(2, 3, 0)
 
+	if certYearsTmp, err := strconv.Atoi(m.certYears); err == nil {
+		expiration = time.Now().AddDate(certYearsTmp, 0, 0)
+	}
+
+	org := []string{"mkcert development certificate"}
+	if m.org != "" {
+		org = []string{m.org}
+	}
+
 	tpl := &x509.Certificate{
 		SerialNumber: randomSerialNumber(),
 		Subject: pkix.Name{
-			Organization:       []string{"mkcert development certificate"},
+			Organization:       org,
 			OrganizationalUnit: []string{userAndHostname},
 		},
 
@@ -324,10 +333,21 @@ func (m *mkcert) newCA() {
 
 	skid := sha1.Sum(spki.SubjectPublicKey.Bytes)
 
+	expiration := time.Now().AddDate(10, 0, 0)
+
+	if certYearsTmp, err := strconv.Atoi(m.certYears); err == nil {
+		expiration = time.Now().AddDate(certYearsTmp, 0, 0)
+	}
+
+	org := []string{"mkcert development certificate"}
+	if m.org != "" {
+		org = []string{m.org}
+	}
+
 	tpl := &x509.Certificate{
 		SerialNumber: randomSerialNumber(),
 		Subject: pkix.Name{
-			Organization:       []string{"mkcert development CA"},
+			Organization:       org,
 			OrganizationalUnit: []string{userAndHostname},
 
 			// The CommonName is required by iOS to show the certificate in the
@@ -337,7 +357,7 @@ func (m *mkcert) newCA() {
 		},
 		SubjectKeyId: skid[:],
 
-		NotAfter:  time.Now().AddDate(10, 0, 0),
+		NotAfter:  expiration,
 		NotBefore: time.Now(),
 
 		KeyUsage: x509.KeyUsageCertSign,
